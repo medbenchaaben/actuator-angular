@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  serverUrl: 'http://localhost:8080/admin-monitor'
+  serverUrl: 'http://localhost:8080/manage-api/admin-monitor'
 };
 
 /*

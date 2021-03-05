@@ -7,30 +7,30 @@
   <div class="collapse navbar-collapse" id="nav">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
-        <span ><i class="fa fa-server"></i> System: </span>&nbsp;&nbsp;
-        <span ><i class="fa fa-database"></i> DB:  - </span>&nbsp;
-        <span ><i class="fa fa-hdd-o"></i> Disk Space: </span>&nbsp;&nbsp;
-        <span ><i class="fa fa-microchip"></i> Processors: </span>&nbsp;&nbsp;
-        <span><i class="fa fa-clock-o"></i> Up Time: </span>
+        <span [ngClass]="{'text-danger': systemHealth?.status !== 'UP'}"><i class="fa fa-server"></i> System: {{systemHealth?.status}}</span>&nbsp;&nbsp;
+        <span [ngClass]="{'text-danger': systemHealth?.components?.db?.status !== 'UP'}"><i class="fa fa-database"></i> DB: {{systemHealth?.components?.db?.details?.database}} - {{systemHealth?.components?.db?.status}}</span>&nbsp;
+        <span [ngClass]="{'text-danger': systemHealth?.components?.diskSpace?.status !== 'UP'}"><i class="fa fa-hdd-o"></i> Disk Space: {{freeDiskSpace}}</span>&nbsp;&nbsp;
+        <span [ngClass]="{'text-danger': processors < 3}"><i class="fa fa-microchip"></i> Processors: {{processors}}</span>&nbsp;&nbsp;
+        <span><i class="fa fa-clock-o"></i> Up Time: {{processUpTime}}</span>
       </li>
     </ul>
     <div class="form-inline my-2 my-lg-0">
-      <button  class="btn btn-success my-2 my-sm-0">
-      Refresh Data
-      </button>
+      <button (click)="onRefreshData()" class="btn btn-success my-2 my-sm-0">Refresh Data</button>
     </div>
   </div>
 </nav>
-
-<div class="container">
+<div *ngIf="errorMessage" style="margin-top: 30px;">
+  <app-alert-error [errorMessage]="errorMessage" ></app-alert-error>
+</div>
+<div *ngIf="!errorMessage" class="container container-main">
   <div class="row" style="margin-top: 10px;">
     <div class="col-md-4 col-xl-3">
         <div class="card bg-c-green order-card">
             <div class="card-block">
               <i class="fa fa-check-circle-o f-left" style="margin-right: 5px;"></i>&nbsp;
                 <h6 class="m-b-20" style="margin-top: -20px;">200 Response</h6>
-                <h2 class="text-right" style="margin-top: -40px;"><span></span></h2>
-                <p class="m-b-0">Updated:<span  class="f-right"></span></p>
+                <h2 class="text-right" style="margin-top: -40px;"><span>{{http200Traces?.length}}</span></h2>
+                <p class="m-b-0">Updated:<span class="f-right">{{http200Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
@@ -40,8 +40,8 @@
             <div class="card-block">
               <i class="fa fa-ban f-left" style="margin-right: 5px;"></i>&nbsp;
                 <h6 class="m-b-20" style="margin-top: -20px;">404 Response</h6>
-                <h2 class="text-right" style="margin-top: -40px;"><span></span></h2>
-                <p class="m-b-0">Updated:<span  class="f-right"></span></p>
+                <h2 class="text-right" style="margin-top: -40px;"><span>{{http404Traces?.length}}</span></h2>
+                <p class="m-b-0">Updated:<span class="f-right">{{http404Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
@@ -51,8 +51,8 @@
             <div class="card-block">
               <i class="fa fa-exclamation-circle f-left" style="margin-right: 5px;"></i>&nbsp;
                 <h6 class="m-b-20" style="margin-top: -20px;">400 Response</h6>
-                <h2 class="text-right" style="margin-top: -40px;"><span></span></h2>
-                <p class="m-b-0">Updated:<span class="f-right"></span></p>
+                <h2 class="text-right" style="margin-top: -40px;"><span>{{http400Traces?.length}}</span></h2>
+                <p class="m-b-0">Updated:<span class="f-right">{{http400Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
@@ -62,8 +62,8 @@
             <div class="card-block">
               <i class="fa fa-bug f-left" style="margin-right: 5px;"></i>&nbsp;
                 <h6 class="m-b-20" style="margin-top: -20px;">500 Response</h6>
-                <h2 class="text-right" style="margin-top: -40px;"><span></span></h2>
-                <p class="m-b-0">Updated:<span class="f-right"></span></p>
+                <h2 class="text-right" style="margin-top: -40px;"><span>{{http500Traces?.length}}</span></h2>
+                <p class="m-b-0">Updated:<span class="f-right">{{http500Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
@@ -79,9 +79,9 @@
 
   <hr>
 
-   <!-- <div class="col-sm-6 col-md-6 col-lg-12" style="margin-top: 50px;">
+<div class="col-sm-6 col-md-6 col-lg-12" style="margin-top: 50px;">
     <h5 class="pull-left">HTTP Traces</h5>
-    <button type="button" (click)="exportTableToExcel()" class="btn btn-primary btn-sm pull-right" style="margin-bottom: 10px;">
+    <button (click)="exportTableToExcel()" type="button" class="btn btn-primary btn-sm pull-right" style="margin-bottom: 10px;">
       <i class="fa fa-external-link" aria-hidden="true"></i>
       export to Excel</button>
     <table class="table table-hover text-center" id="httptrace-table">
@@ -96,10 +96,8 @@
         </tr>
       </thead>
       <tbody >
-        <tr *ngFor="let trace of traceList | paginate: { id: 'trace-list',
-        itemsPerPage: pageSize,
-        currentPage: page,
-        totalItems: traceList?.length }" style="cursor: pointer;">
+        <tr *ngFor="let trace of traceList | paginate: {id: 'trace-list',
+          itemsPerPage: pageSize, currentPage: page, totalItems: traceList?.length} " style="cursor: pointer;">
           <td (click)="onSelectTrace(trace)">{{trace?.timestamp | date:'medium'}}</td>
           <td (click)="onSelectTrace(trace)">{{trace?.request.method}}</td>
           <td (click)="onSelectTrace(trace)">{{trace?.timeTaken}}</td>
@@ -117,11 +115,10 @@
         </tr>
       </tbody>
     </table>
-    <pagination-controls class="text-center" id="trace-list" (pageChange)="page = $event" maxSize="10"
-    directionLinks="true"></pagination-controls>
-
- </div>
-</div> -->
+    <pagination-controls class="text-center" id="trace-list" (pageChange)="page = $event" [maxSize]="10"
+    [directionLinks]="true"></pagination-controls>
+  </div>
+</div>
 
 <!-- Button trigger modal -->
 <button hidden="true" type="button" id="trace-modal" class="btn btn-primary" data-toggle="modal" data-target="#trace-info-modal"></button>
@@ -152,50 +149,49 @@
               <div class="tab-pane fade show active" id="request">
                 <p>
                   <strong>Time Stamp:</strong>
-                  <!-- {{selectedTrace?.timestamp | date:'medium'}} -->
+                  {{selectedTrace?.timestamp | date:'medium'}}
                 </p>
                 <p>
                   <strong>Time Taken(ms):</strong>
-                  <!-- {{selectedTrace?.timeTaken}} -->
+                  {{selectedTrace?.timeTaken}}
                 </p>
                 <p>
                   <strong>Request Method:</strong>
-                  <!-- {{selectedTrace?.request.method}} -->
+                  {{selectedTrace?.request.method}}
                 </p>
                 <p>
                   <strong>Remote Address:</strong>
-                  <!-- {{selectedTrace?.request.remoteAddress}} -->
+                  {{selectedTrace?.request.remoteAddress}}
                 </p>
                 <p>
                   <strong>URI:</strong>
-                  <!-- {{selectedTrace?.request.uri}} -->
+                  {{selectedTrace?.request.uri}}
                 </p>
                 <p>
                   <strong>Origin:</strong>
-                  <!-- {{selectedTrace?.request.headers['origin']}} -->
+                  {{selectedTrace?.request.headers['origin']}}
                 </p>
                 <p>
                   <strong>User Agent (Web Client):</strong>
-                  <!-- {{selectedTrace?.request.headers['user-agent']}} -->
+                  {{selectedTrace?.request.headers['user-agent']}}
                 </p>
               </div>
-
               <div class="tab-pane fade" id="response">
                 <dl>
                   <dt>Status:</dt>
-                  <!-- <dd>{{selectedTrace?.response.status}}</dd> -->
+                  <dd>{{selectedTrace?.response.status}}</dd>
                 </dl>
                 <dl>
                   <dt>Date:</dt>
-                  <!-- <dd>{{selectedTrace?.response.headers['Date']}}</dd> -->
+                  <dd>{{selectedTrace?.response.headers['Date']}}</dd>
                 </dl>
                 <dl>
                   <dt>Content Type:</dt>
-                  <!-- <dd>{{selectedTrace?.response.headers['Content-Type']}}</dd> -->
+                  <dd>{{selectedTrace?.response.headers['Content-Type']}}</dd>
                 </dl>
                 <p>
                   <strong>Server Allowed Origins:</strong>
-                  <!-- {{selectedTrace?.response.headers['Access-Control-Allow-Origin']}} -->
+                  {{selectedTrace?.response.headers['Access-Control-Allow-Origin']}}
                 </p>
               </div>
             </div>
@@ -205,6 +201,9 @@
       </div>
     </div>
   </div>
+</div>
+<div style="margin-top: 30px; border-top: solid 1px #747794;">
+  <app-footer></app-footer>
 </div>
 
 

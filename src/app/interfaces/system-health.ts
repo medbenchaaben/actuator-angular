@@ -1,6 +1,6 @@
 export interface SystemHealth {
-  status: string,
-  components: {
+  status?: string,
+  components?: {
     db: {
       status: string,
       details: {
