@@ -19,8 +19,10 @@
     </div>
   </div>
 </nav>
-<div *ngIf="errorMessage" style="margin-top: 30px;">
-  <app-alert-error [errorMessage]="errorMessage" ></app-alert-error>
+<div *ngIf="errorMessage" class="container container-main">
+  <div style="margin-top: 30px;">
+    <app-alert-error [errorMessage]="errorMessage" ></app-alert-error>
+  </div>
 </div>
 <div *ngIf="!errorMessage" class="container container-main">
   <div class="row" style="margin-top: 10px;">
@@ -117,7 +119,6 @@
     </table>
     <pagination-controls class="text-center" id="trace-list" (pageChange)="page = $event" [maxSize]="10"
     [directionLinks]="true"></pagination-controls>
-  </div>
 </div>
 
 <!-- Button trigger modal -->
@@ -205,5 +206,3 @@
 <div style="margin-top: 30px; border-top: solid 1px #747794;">
   <app-footer></app-footer>
 </div>
-
-

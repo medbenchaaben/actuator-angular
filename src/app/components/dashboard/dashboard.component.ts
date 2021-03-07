@@ -5,6 +5,7 @@ import { SystemHealth } from 'src/app/interfaces/system-health';
 import { AdminDashboardService } from 'src/app/services/admin-dashboard.service';
 import * as Chart from 'chart.js';
 import { ChartType } from 'src/app/enums/chart-type';
+import { HealthStatus } from 'src/app/enums/health-status';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,13 +29,21 @@ export class DashboardComponent implements OnInit {
   upTimestamp: number = 0;
   pageSize: number = 10;
   page: number = 1;
+  upTimeInterval: any  = undefined;
+  isIntervalStopped: boolean = false;
 
   constructor(private dashboardService: AdminDashboardService) { }
 
   ngOnInit(): void {
     this.getCpuUsage();
     this.getSystemHealth();
-    this.getProcessUpTime(true);
+    setTimeout(() => {
+      if(this.systemHealth?.status !== HealthStatus.UP) {
+        this.processUpTime = '';
+      } else {
+        this.getProcessUpTime(true);
+      }
+    }, 1000)
     this.getTraces();
   }
 
@@ -111,7 +120,16 @@ export class DashboardComponent implements OnInit {
     this.getTraces();
     this.getSystemHealth();
     this.getCpuUsage();
-    this.getProcessUpTime(false);
+    setTimeout(() => {
+      if(this.isIntervalStopped && this.systemHealth?.status !== HealthStatus.UP ) {
+        this.processUpTime = '';
+      } else if(this.isIntervalStopped) {
+        this.getProcessUpTime(true);
+        this.isIntervalStopped = false;
+      } else {
+        this.getProcessUpTime(false);
+      }
+    }, 1000)
   }
 
   private getProcessUpTime(isUpdateTime: boolean) {
@@ -130,7 +148,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateTime(): void {
-    setInterval(() => {
+    this.upTimeInterval =  setInterval(() => {
       this.processUpTime = this.formateUptime(this.upTimestamp + 1);
       this.upTimestamp++;
     }, 1000);
@@ -148,12 +166,21 @@ export class DashboardComponent implements OnInit {
     this.dashboardService.getSystemHealth().subscribe(
       (response: SystemHealth) => {
         this.systemHealth = response;
-        this.freeDiskSpace = this.formatBytes(this.systemHealth?.components!.diskSpace!.details!.free);
+        this.setFreeDiskSpace();
       },
       (error: HttpErrorResponse) => {
-        this.errorMessage = error.message;
+        this.systemHealth = error.error;
+        this.setFreeDiskSpace();
+        this.stopInterval();
+        if(error.status !== 503) {
+          this.errorMessage = error.message;
+        }
       }
     )
+  }
+
+  private setFreeDiskSpace() {
+    this.freeDiskSpace = this.formatBytes(this.systemHealth!.components!.diskSpace.details.free);
   }
 
   private formatBytes(bytes: number): string {
@@ -211,13 +238,32 @@ export class DashboardComponent implements OnInit {
   private getTraces() {
     this.dashboardService.getHttpTraces().subscribe(
       (response: any) => {
+        this.errorMessage = undefined;
         this.processTraces(response.traces);
-        this.initializeBarChart();
-        this.initializePieChart();
+        setTimeout(() => {
+          this.initializeBarChart();
+          this.initializePieChart();
+        }, 1000)
       },
       (error: HttpErrorResponse) => {
+        this.resetFields();
         this.errorMessage = error.message;
       }
     )
+  }
+
+  private resetFields() {
+    this.processUpTime = '';
+    this.processors = 0;
+    this.freeDiskSpace = '';
+    this.systemHealth = undefined;
+    this.stopInterval();
+  }
+
+  private stopInterval() {
+    console.log('entrou stop');
+
+    clearInterval(Number(this.upTimeInterval));
+    this.isIntervalStopped = true;
   }
 }
