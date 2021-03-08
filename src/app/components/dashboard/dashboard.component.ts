@@ -6,6 +6,7 @@ import { AdminDashboardService } from 'src/app/services/admin-dashboard.service'
 import * as Chart from 'chart.js';
 import { ChartType } from 'src/app/enums/chart-type';
 import { HealthStatus } from 'src/app/enums/health-status';
+import { MemoryManagement, MemoryMax, MemoryUsed } from 'src/app/interfaces/memory-management';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,6 +32,7 @@ export class DashboardComponent implements OnInit {
   page: number = 1;
   upTimeInterval: any  = undefined;
   isIntervalStopped: boolean = false;
+  memoryManagement: MemoryManagement | undefined = undefined;
 
   constructor(private dashboardService: AdminDashboardService) { }
 
@@ -44,13 +46,69 @@ export class DashboardComponent implements OnInit {
         this.getProcessUpTime(true);
       }
     }, 1000)
+    this.getMemoryManagement();
     this.getTraces();
+  }
+
+  private getMemoryManagement() {
+    this.dashboardService.getMemoryUsed().subscribe(
+      (responseUsed: MemoryUsed) => {
+        this.dashboardService.getMemoryMax().subscribe(
+          (responseMax: MemoryMax) => {
+            this.memoryManagement = {memoryUsed: responseUsed, memoryMax: responseMax}
+            this.initializeMemoryBarChart();
+          }
+        )
+      },
+      (error: HttpErrorResponse) => {
+        this.errorMessage = error.message;
+      }
+    )
+  }
+
+  private initializeDoughnutChart() {
+    const canvas = document.querySelector('#doughnutChart') as HTMLCanvasElement;
+    return new Chart(canvas, {
+      type: ChartType.DOUGHNUT,
+      data: {
+        labels: ['Disk Used', 'Free disk', 'Treshold'],
+        datasets: [{data: [this.convertBytesToGigaBytes((this.systemHealth!.components!.diskSpace.details.total - this.systemHealth!.components!.diskSpace.details.free)),
+                            this.convertBytesToGigaBytes(this.systemHealth!.components!.diskSpace.details.free),
+                            this.convertBytesToGigaBytes(this.systemHealth!.components!.diskSpace.details.threshold)],
+                            backgroundColor: ['rgb(253,126,20)', 'rgb(40,167,69)', 'rgb(220,53,69)'],
+                            borderColor: ['rgb(253,126,20)', 'rgb(40,167,69)', 'rgb(220,53,69)'],
+                          }]
+      },
+      options: {
+        title: { display: true, text: [`Disk Details in GB`] },
+        legend: { display: true },
+      }
+    })
+  }
+
+  private initializeMemoryBarChart() {
+    const canvas = document.querySelector('#horizontalBarChart') as HTMLCanvasElement;
+    return new Chart(canvas, {
+      type: ChartType.HORIZONTAL_BAR,
+      data: {
+        labels: ['Memory Max', 'Memory Used'],
+        datasets:[{data: [this.convertBytesToGigaBytes(this.memoryManagement!.memoryMax.measurements[0].value),
+                          this.convertBytesToGigaBytes(this.memoryManagement!.memoryUsed.measurements[0].value)],
+                          backgroundColor: ['rgb(253,126,20)', 'rgb(40,167,69)'],
+                          borderColor: ['rgb(253,126,20)', 'rgb(40,167,69)'],
+                        }]
+      },
+      options: {
+        title: { display: true, text: [`Memory in GB`] },
+        legend: { display: false }
+      }
+    })
   }
 
   private initializePieChart() {
     const canvas = document.querySelector('#pieChart') as HTMLCanvasElement;
     return new Chart(canvas, {
-      type: ChartType.Pie,
+      type: ChartType.PIE,
       data: {
         labels: ['200', '400', '404', '500'],
         datasets: [{ data: [this.http200Traces.length, this.http400Traces.length, this.http404Traces.length, this.http500Traces.length],
@@ -60,8 +118,8 @@ export class DashboardComponent implements OnInit {
         }]
       },
       options: {
-        title: {display: true, text: [`Last 100 Requests as of ${this.formatDate(new Date())}`] },
-        legend: {display: true},
+        title: { display: true, text: [`Last 100 Requests as of ${this.formatDate(new Date())}`] },
+        legend: { display: true },
       }
     });
   }
@@ -69,7 +127,7 @@ export class DashboardComponent implements OnInit {
   private initializeBarChart() {
     const canvas = document.querySelector('#barChart') as HTMLCanvasElement;
     return new Chart(canvas, {
-      type: ChartType.Bar,
+      type: ChartType.BAR,
       data: {
         labels: ['200', '404', '400', '500'],
         datasets: [{ data: [this.http200Traces.length, this.http404Traces.length, this.http400Traces.length, this.http500Traces.length],
@@ -79,8 +137,8 @@ export class DashboardComponent implements OnInit {
         }]
       },
       options: {
-        title: {display: true, text: [`Last 100 Requests as of ${this.formatDate(new Date())}`] },
-        legend: {display: false},
+        title: { display: true, text: [`Last 100 Requests as of ${this.formatDate(new Date())}`] },
+        legend: { display: false },
         scales: {
           yAxes: [{ticks: {beginAtZero: true}}]
         }
@@ -120,6 +178,7 @@ export class DashboardComponent implements OnInit {
     this.getTraces();
     this.getSystemHealth();
     this.getCpuUsage();
+    this.getMemoryManagement();
     setTimeout(() => {
       if(this.isIntervalStopped && this.systemHealth?.status !== HealthStatus.UP ) {
         this.processUpTime = '';
@@ -167,6 +226,7 @@ export class DashboardComponent implements OnInit {
       (response: SystemHealth) => {
         this.systemHealth = response;
         this.setFreeDiskSpace();
+        this.initializeDoughnutChart();
       },
       (error: HttpErrorResponse) => {
         this.systemHealth = error.error;
@@ -181,6 +241,13 @@ export class DashboardComponent implements OnInit {
 
   private setFreeDiskSpace() {
     this.freeDiskSpace = this.formatBytes(this.systemHealth!.components!.diskSpace.details.free);
+  }
+
+  private convertBytesToGigaBytes(bytes: number): number {
+    if(bytes) {
+      return Number((((bytes / 1024) / 1024) / 1024).toFixed(3))
+    }
+    return 0;
   }
 
   private formatBytes(bytes: number): string {
@@ -238,6 +305,7 @@ export class DashboardComponent implements OnInit {
   private getTraces() {
     this.dashboardService.getHttpTraces().subscribe(
       (response: any) => {
+        console.log(response.traces);
         this.errorMessage = undefined;
         this.processTraces(response.traces);
         setTimeout(() => {
@@ -261,8 +329,6 @@ export class DashboardComponent implements OnInit {
   }
 
   private stopInterval() {
-    console.log('entrou stop');
-
     clearInterval(Number(this.upTimeInterval));
     this.isIntervalStopped = true;
   }

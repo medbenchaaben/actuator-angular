@@ -4,6 +4,7 @@ import { environment } from 'src/environments/environment';
 import { Observable } from 'rxjs';
 import { SystemHealth } from '../interfaces/system-health';
 import { SystemCpu } from '../interfaces/system-cpu';
+import { MemoryMax, MemoryUsed } from '../interfaces/memory-management';
 
 @Injectable({
   providedIn: 'root'
@@ -28,5 +29,13 @@ export class AdminDashboardService {
 
   public getProcessUpTime(): Observable<any> {
     return this.http.get<any>(`${this.SERVER_URL}/metrics/process.uptime`)
+  }
+
+  public getMemoryUsed(): Observable<MemoryUsed> {
+    return this.http.get<MemoryUsed>(`${this.SERVER_URL}/metrics/jvm.memory.used`)
+  }
+
+  public getMemoryMax(): Observable<MemoryMax> {
+    return this.http.get<MemoryMax>(`${this.SERVER_URL}/metrics/jvm.memory.max`)
   }
 }
