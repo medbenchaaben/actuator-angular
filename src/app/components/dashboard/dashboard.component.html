@@ -19,12 +19,12 @@
     </div>
   </div>
 </nav>
-<div *ngIf="errorMessage" class="container container-main">
+<div *ngIf="isErrorMessage()" class="container container-main">
   <div style="margin-top: 30px;">
     <app-alert-error [errorMessage]="errorMessage" ></app-alert-error>
   </div>
 </div>
-<div *ngIf="!errorMessage" class="container container-main">
+<div *ngIf="!isErrorMessage()" class="container container-main">
   <div class="row" style="margin-top: 10px;">
     <div class="col-md-4 col-xl-3">
         <div class="card bg-c-green order-card">
@@ -166,6 +166,10 @@
                 <p>
                   <strong>Request Method:</strong>
                   {{selectedTrace?.request.method}}
+                </p>
+                <p *ngIf="selectedTrace?.principal">
+                  <strong>Logged User:</strong>
+                  {{selectedTrace?.principal?.name}}
                 </p>
                 <p>
                   <strong>Remote Address:</strong>
