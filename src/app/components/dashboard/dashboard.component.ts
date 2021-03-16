@@ -7,6 +7,8 @@ import * as Chart from 'chart.js';
 import { ChartType } from 'src/app/enums/chart-type';
 import { HealthStatus } from 'src/app/enums/health-status';
 import { MemoryManagement, MemoryMax, MemoryUsed } from 'src/app/interfaces/memory-management';
+import { Application } from 'src/app/interfaces/application';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,8 +35,10 @@ export class DashboardComponent implements OnInit {
   upTimeInterval: any  = undefined;
   isIntervalStopped: boolean = false;
   memoryManagement: MemoryManagement | undefined = undefined;
+  application: Application = history.state.data;
 
-  constructor(private dashboardService: AdminDashboardService) { }
+  constructor(private dashboardService: AdminDashboardService,
+              private router: Router) { }
 
   ngOnInit(): void {
     this.getCpuUsage();
@@ -44,9 +48,9 @@ export class DashboardComponent implements OnInit {
   }
 
   private getMemoryManagement() {
-    this.dashboardService.getMemoryUsed().subscribe(
+    this.dashboardService.getMemoryUsed(this.application.context).subscribe(
       (responseUsed: MemoryUsed) => {
-        this.dashboardService.getMemoryMax().subscribe(
+        this.dashboardService.getMemoryMax(this.application.context).subscribe(
           (responseMax: MemoryMax) => {
             this.clearErrorMessage();
             this.memoryManagement = {memoryUsed: responseUsed, memoryMax: responseMax}
@@ -176,7 +180,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getProcessUpTime(isUpdateTime: boolean) {
-    this.dashboardService.getProcessUpTime().subscribe(
+    this.dashboardService.getProcessUpTime(this.application.context).subscribe(
       (response: any) => {
         this.clearErrorMessage();
         this.upTimestamp = Math.round(response?.measurements[0].value);
@@ -207,7 +211,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getSystemHealthInit() {
-    this.dashboardService.getSystemHealth().subscribe(
+    this.dashboardService.getSystemHealth(this.application.context).subscribe(
       (response: SystemHealth) => {
         this.clearErrorMessage();
         this.systemHealth = response;
@@ -229,7 +233,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getSystemHealthRefresh() {
-    this.dashboardService.getSystemHealth().subscribe(
+    this.dashboardService.getSystemHealth(this.application.context).subscribe(
       (response: SystemHealth) => {
         this.clearErrorMessage();
         this.systemHealth = response;
@@ -276,7 +280,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getCpuUsage() {
-    this.dashboardService.getSystemCPU().subscribe(
+    this.dashboardService.getSystemCPU(this.application.context).subscribe(
       (response: SystemCpu) => {
         this.clearErrorMessage();
         this.processors = response?.measurements[0]?.value;
@@ -318,9 +322,8 @@ export class DashboardComponent implements OnInit {
   }
 
   private getTraces() {
-    this.dashboardService.getHttpTraces().subscribe(
+    this.dashboardService.getHttpTraces(this.application.context).subscribe(
       (response: any) => {
-        console.log(response.traces);
         this.clearErrorMessage();
         this.processTraces(response.traces);
         this.initializeBarChart();
@@ -331,6 +334,10 @@ export class DashboardComponent implements OnInit {
         this.setErrorMessage(error);
       }
     )
+  }
+
+  gotoHome() {
+    this.router.navigate(['']);
   }
 
   private resetFields() {

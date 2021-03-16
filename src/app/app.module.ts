@@ -7,19 +7,23 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AlertErrorComponent } from './components/alert-error/alert-error.component';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { FooterComponent } from './components/footer/footer.component';
+import { IndexComponent } from './components/index/index.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashboardComponent,
     AlertErrorComponent,
-    FooterComponent
+    FooterComponent,
+    IndexComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    NgxPaginationModule
+    NgxPaginationModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
