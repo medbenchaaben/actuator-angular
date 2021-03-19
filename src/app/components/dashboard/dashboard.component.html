@@ -27,18 +27,18 @@
 </div>
 <div *ngIf="!isErrorMessage()" class="container container-main">
   <div class="row" style="margin-top: 10px;">
-    <div class="col-md-4 col-xl-3">
+    <div class="col-md-4 col-xl-3 slit-in-horizontal">
         <div class="card bg-c-green order-card">
             <div class="card-block">
               <i class="fa fa-check-circle-o f-left" style="margin-right: 5px;"></i>&nbsp;
-                <h6 class="m-b-20" style="margin-top: -20px;">200 Response</h6>
+                <h6 class="m-b-20" style="margin-top: -20px;">2XX Response</h6>
                 <h2 class="text-right" style="margin-top: -40px;"><span>{{http200Traces?.length}}</span></h2>
                 <p class="m-b-0">Updated:<span class="f-right">{{http200Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4 col-xl-3">
+    <div class="col-md-4 col-xl-3 slit-in-horizontal">
         <div class="card bg-c-blue order-card">
             <div class="card-block">
               <i class="fa fa-ban f-left" style="margin-right: 5px;"></i>&nbsp;
@@ -49,22 +49,22 @@
         </div>
     </div>
 
-    <div class="col-md-4 col-xl-3">
+    <div class="col-md-4 col-xl-3 slit-in-horizontal">
         <div class="card bg-c-yellow order-card">
             <div class="card-block">
               <i class="fa fa-exclamation-circle f-left" style="margin-right: 5px;"></i>&nbsp;
-                <h6 class="m-b-20" style="margin-top: -20px;">400 Response</h6>
+                <h6 class="m-b-20" style="margin-top: -20px;">4XX Response</h6>
                 <h2 class="text-right" style="margin-top: -40px;"><span>{{http400Traces?.length}}</span></h2>
                 <p class="m-b-0">Updated:<span class="f-right">{{http400Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4 col-xl-3">
+    <div class="col-md-4 col-xl-3 slit-in-horizontal">
         <div class="card bg-c-pink order-card">
             <div class="card-block">
               <i class="fa fa-bug f-left" style="margin-right: 5px;"></i>&nbsp;
-                <h6 class="m-b-20" style="margin-top: -20px;">500 Response</h6>
+                <h6 class="m-b-20" style="margin-top: -20px;">5XX Response</h6>
                 <h2 class="text-right" style="margin-top: -40px;"><span>{{http500Traces?.length}}</span></h2>
                 <p class="m-b-0">Updated:<span class="f-right">{{http500Traces[0]?.timestamp | date: 'short'}}</span></p>
             </div>

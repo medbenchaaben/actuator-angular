@@ -23,7 +23,7 @@
 <div *ngIf="!isErrorMessage()" id="main-container" class="container container-main">
 
   <div class="row" style="margin-top: 10px;">
-    <div *ngFor="let app of applications" class="col-md-4 col-xl-3">
+    <div *ngFor="let app of applications" class="col-md-4 col-xl-3 rotate-in-ver">
       <div [ngClass]="app?.systemHealth!.status === healthStatus.UP ? 'card bg-c-green order-card' :
                       'card bg-c-pink order-card'">
           <div class="card-block">
@@ -68,7 +68,7 @@
               </div>
               <div class="form-group">
                 <label for="url">URL</label>
-                <input type="text" ngModel="{{editApplication?.url}}" name="url" class="form-control" id="url" placeholder="URL">
+                <input type="text" ngModel="{{editApplication?.monitoringUrl}}" name="url" class="form-control" id="url" placeholder="URL">
               </div>
               <div class="form-group">
                 <label for="isActive">Is Active ?</label>
@@ -127,8 +127,8 @@
           <input type="context" ngModel name="context" class="form-control" id="context" placeholder="Context" required>
         </div>
         <div class="form-group">
-          <label for="url">URL</label>
-          <input type="text" ngModel name="url" class="form-control" id="url" placeholder="URL" required>
+          <label for="url">Monitoring URL</label>
+          <input type="text" ngModel name="monitoringUrl" class="form-control" id="monitoringUrl" placeholder="URL" required>
         </div>
         <input type="hidden" ngModel={{true}}  name="isActive" id="isActive">
         <div class="modal-footer">

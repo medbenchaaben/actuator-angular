@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, OnChanges } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { SystemCpu } from 'src/app/interfaces/system-cpu';
 import { SystemHealth } from 'src/app/interfaces/system-health';
 import { AdminDashboardService } from 'src/app/services/admin-dashboard.service';
@@ -38,7 +38,8 @@ export class DashboardComponent implements OnInit {
   application: Application = history.state.data;
 
   constructor(private dashboardService: AdminDashboardService,
-              private router: Router) { }
+              private router: Router,
+              private ngZone: NgZone) { }
 
   ngOnInit(): void {
     this.getCpuUsage();
@@ -48,9 +49,9 @@ export class DashboardComponent implements OnInit {
   }
 
   private getMemoryManagement() {
-    this.dashboardService.getMemoryUsed(this.application.context).subscribe(
+    this.dashboardService.getMemoryUsed(this.application.monitoringUrl).subscribe(
       (responseUsed: MemoryUsed) => {
-        this.dashboardService.getMemoryMax(this.application.context).subscribe(
+        this.dashboardService.getMemoryMax(this.application.monitoringUrl).subscribe(
           (responseMax: MemoryMax) => {
             this.clearErrorMessage();
             this.memoryManagement = {memoryUsed: responseUsed, memoryMax: responseMax}
@@ -108,8 +109,8 @@ export class DashboardComponent implements OnInit {
     return new Chart(canvas, {
       type: ChartType.PIE,
       data: {
-        labels: ['200', '400', '404', '500'],
-        datasets: [{ data: [this.http200Traces.length, this.http400Traces.length, this.http404Traces.length, this.http500Traces.length],
+        labels: ['2XX', '404', '4XX', '5XX'],
+        datasets: [{ data: [this.http200Traces.length, this.http404Traces.length, this.http400Traces.length, this.http500Traces.length],
         backgroundColor: ['rgb(40,167,69)', 'rgb(0,123,255)', 'rgb(253,126,20)', 'rgb(220,53,69)'],
         borderColor: ['rgb(40,167,69)', 'rgb(0,123,255)', 'rgb(253,126,20)', 'rgb(220,53,69)'],
         borderWidth: 3
@@ -127,7 +128,7 @@ export class DashboardComponent implements OnInit {
     return new Chart(canvas, {
       type: ChartType.BAR,
       data: {
-        labels: ['200', '404', '400', '500'],
+        labels: ['2XX', '404', '4XX', '5XX'],
         datasets: [{ data: [this.http200Traces.length, this.http404Traces.length, this.http400Traces.length, this.http500Traces.length],
         backgroundColor: ['rgb(40,167,69)', 'rgb(0,123,255)', 'rgb(253,126,20)', 'rgb(220,53,69)'],
         borderColor: ['rgb(40,167,69)', 'rgb(0,123,255)', 'rgb(253,126,20)', 'rgb(220,53,69)'],
@@ -180,7 +181,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getProcessUpTime(isUpdateTime: boolean) {
-    this.dashboardService.getProcessUpTime(this.application.context).subscribe(
+    this.dashboardService.getProcessUpTime(this.application.monitoringUrl).subscribe(
       (response: any) => {
         this.clearErrorMessage();
         this.upTimestamp = Math.round(response?.measurements[0].value);
@@ -211,7 +212,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getSystemHealthInit() {
-    this.dashboardService.getSystemHealth(this.application.context).subscribe(
+    this.dashboardService.getSystemHealth(this.application.monitoringUrl).subscribe(
       (response: SystemHealth) => {
         this.clearErrorMessage();
         this.systemHealth = response;
@@ -233,7 +234,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getSystemHealthRefresh() {
-    this.dashboardService.getSystemHealth(this.application.context).subscribe(
+    this.dashboardService.getSystemHealth(this.application.monitoringUrl).subscribe(
       (response: SystemHealth) => {
         this.clearErrorMessage();
         this.systemHealth = response;
@@ -280,7 +281,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getCpuUsage() {
-    this.dashboardService.getSystemCPU(this.application.context).subscribe(
+    this.dashboardService.getSystemCPU(this.application.monitoringUrl).subscribe(
       (response: SystemCpu) => {
         this.clearErrorMessage();
         this.processors = response?.measurements[0]?.value;
@@ -302,17 +303,18 @@ export class DashboardComponent implements OnInit {
       return !trace.request.uri.includes('admin-monitor')
     });
     this.traceList.forEach(trace => {
-      switch (trace.response.status) {
-        case 200:
+      const status = trace.response.status;
+      switch (true) {
+        case (status >= 200 && status <= 299):
           this.http200Traces.push(trace);
           break;
-        case 400:
+        case (status !== 404 && (status >= 400 && status <= 499)):
           this.http400Traces.push(trace);
           break;
-        case 404:
+        case (status === 404):
           this.http404Traces.push(trace);
           break;
-        case 500:
+        case (status >= 500 && status <= 599):
           this.http500Traces.push(trace);
           break;
         default:
@@ -322,7 +324,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private getTraces() {
-    this.dashboardService.getHttpTraces(this.application.context).subscribe(
+    this.dashboardService.getHttpTraces(this.application.monitoringUrl).subscribe(
       (response: any) => {
         this.clearErrorMessage();
         this.processTraces(response.traces);

@@ -11,32 +11,29 @@ import { MemoryMax, MemoryUsed } from '../interfaces/memory-management';
 })
 export class AdminDashboardService {
 
-  private SERVER_URL = environment.serverUrl;
-  private CONTEXT_MONITOR = environment.contextMonitor;
-
   constructor(private http: HttpClient) { }
 
-  public getHttpTraces(contextApp?: string): Observable<any> {
-    return this.http.get<any>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/httptrace`)
+  public getHttpTraces(monitoringUrl: string): Observable<any> {
+    return this.http.get<any>(`${monitoringUrl}/httptrace`)
   }
 
-  public getSystemHealth(contextApp?: string): Observable<SystemHealth> {
-    return this.http.get<SystemHealth>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/health`)
+  public getSystemHealth(monitoringUrl: string): Observable<SystemHealth> {
+    return this.http.get<SystemHealth>(`${monitoringUrl}/health`)
   }
 
-  public getSystemCPU(contextApp?: string): Observable<SystemCpu> {
-    return this.http.get<SystemCpu>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/metrics/system.cpu.count`)
+  public getSystemCPU(monitoringUrl: string): Observable<SystemCpu> {
+    return this.http.get<SystemCpu>(`${monitoringUrl}/metrics/system.cpu.count`)
   }
 
-  public getProcessUpTime(contextApp?: string): Observable<any> {
-    return this.http.get<any>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/metrics/process.uptime`)
+  public getProcessUpTime(monitoringUrl: string): Observable<any> {
+    return this.http.get<any>(`${monitoringUrl}/metrics/process.uptime`)
   }
 
-  public getMemoryUsed(contextApp?: string): Observable<MemoryUsed> {
-    return this.http.get<MemoryUsed>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/metrics/jvm.memory.used`)
+  public getMemoryUsed(monitoringUrl: string): Observable<MemoryUsed> {
+    return this.http.get<MemoryUsed>(`${monitoringUrl}/metrics/jvm.memory.used`)
   }
 
-  public getMemoryMax(contextApp?: string): Observable<MemoryMax> {
-    return this.http.get<MemoryMax>(`${this.SERVER_URL}${contextApp}${this.CONTEXT_MONITOR}/metrics/jvm.memory.max`)
+  public getMemoryMax(monitoringUrl: string): Observable<MemoryMax> {
+    return this.http.get<MemoryMax>(`${monitoringUrl}/metrics/jvm.memory.max`)
   }
 }

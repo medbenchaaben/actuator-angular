@@ -4,7 +4,7 @@ export interface Application {
   id: number
   name: string
   context: string
-  url: string
+  monitoringUrl: string
   isActive: boolean
   systemHealth?: SystemHealth
 }

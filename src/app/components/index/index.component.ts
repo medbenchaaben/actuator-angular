@@ -45,26 +45,35 @@ export class IndexComponent implements OnInit {
   }
 
   async getAllApplications() {
-    const applications: Application[] = await this.applicationService
+    const applications: Application[] | undefined = await this.applicationService
       .getAllApplications()
       .toPromise()
       .then((response) => {
         this.errorMessage = undefined;
         return response;
-      }).catch(error => this.errorMessage = error.message);
-    const applicationsHealth = applications.map(async (app: Application) => {
+      }).catch(error => {
+        this.errorMessage = error.message
+        return undefined;
+      });
+
+    if(applications) {
+      const applicationsHealth = applications.map(async (app: Application) => {
         const health: SystemHealth = await this.adminDashboardService
-          .getSystemHealth(app.context)
+          .getSystemHealth(app.monitoringUrl)
           .toPromise()
           .then((response) => {
             this.errorMessage = undefined;
             return response;
-          }).catch(error => this.errorMessage = error.message);
+          }).catch(error => {
+            const healthDown: SystemHealth = { status: HealthStatus.DOWN }
+            return healthDown;
+          });
         app.systemHealth = health;
         return app;
-    });
-    await Promise.all(applicationsHealth).then(healths => this.applications = healths)
-    this.updatedAt = new Date();
+      });
+      await Promise.all(applicationsHealth).then(healths => this.applications = healths)
+      this.updatedAt = new Date();
+    }
   }
 
   public onUpdateApplication(application?: Application) {
@@ -113,6 +122,9 @@ export class IndexComponent implements OnInit {
   }
 
   isErrorMessage() {
+    if(this.errorMessage) {
+      return true;
+    }
     return false;
   }
 
