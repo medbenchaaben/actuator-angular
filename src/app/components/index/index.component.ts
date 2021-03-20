@@ -77,25 +77,25 @@ export class IndexComponent implements OnInit {
   }
 
   public onUpdateApplication(application?: Application) {
-    // this.employeeService.updateEmployee(employee).subscribe(
-    //   (response: Employee) => {
-    //     const close = document.querySelector('#edit-employee-form') as HTMLButtonElement;
-    //     close.click();
-    //     this.getAllEmployees();
-    //   },
-    //   (error: HttpErrorResponse) => alert(error.message)
-    // );
+    this.applicationService.updateApplication(application).subscribe(
+      (response: Application) => {
+        const close = document.querySelector('#edit-application-form') as HTMLButtonElement;
+        close.click();
+        this.getAllApplications();
+      },
+      (error: HttpErrorResponse) => alert(error.message)
+    );
   }
 
   public onDeleteApplication(id?: number) {
-    // this.employeeService.deleteEmployee(id).subscribe(
-    //   (response: void) => {
-    //     const close = document.querySelector('#delete-employee-form') as HTMLButtonElement;
-    //     close.click();
-    //     this.getAllEmployees();
-    //   },
-    //   (error: HttpErrorResponse) => alert(error.message)
-    // );
+    this.applicationService.deleteApplication(id).subscribe(
+      (response: void) => {
+        const close = document.querySelector('#delete-application-form') as HTMLButtonElement;
+        close.click();
+        this.getAllApplications();
+      },
+      (error: HttpErrorResponse) => alert(error.message)
+    );
   }
 
   public onOpenModal(mode: string, application?: Application) {
